@@ -4,43 +4,52 @@ Perfetto-based DSP tracing for [Pulp](https://github.com/danielraffel/pulp) audi
 plugins — see, per audio block, exactly which DSP node ate the time. A scalar CPU
 meter tells you *that* you're at 40%; the trace tells you *why*.
 
-This is a showcase of the tracing tooling built into Pulp. Everything here is real
-output from real traces — no mockups.
+This repo is a **showcase**, not a package you install. The tracing itself lives
+in the Pulp SDK — everything below is real output from real traces (no mockups).
+
+> **You need [Pulp](https://github.com/danielraffel/pulp) first.** Tracing is a
+> feature of the Pulp SDK, driven by the `pulp trace` CLI.
 
 ---
 
-## What you get
+## Use it (the Pulp-native way)
 
-- **`pulp trace` CLI** — `start` / `stop` / `query` / `explain` / `snapshot` /
-  `doctor` / `open` / `fetch`, plus one-line presets (`slowest-frames`, `xruns`,
-  `dsp-hotspots`, `layout-vs-paint`).
-- **Offline DSP flamegraphs** — a deterministic, deadline-free render of your
-  plugin, instrumented with per-node `dsp.node` spans, flushed to a `.pftrace` you
-  open in [ui.perfetto.dev](https://ui.perfetto.dev).
-- **SQL over your trace** — the same `trace_processor` engine the Perfetto UI uses,
-  from the command line: `pulp trace query "<sql>" --trace run.pftrace`.
-- **Zero-install** — `pulp trace` fetches a pinned, hash-verified
-  `trace_processor` (Perfetto v57.2) on first use; nothing to `brew install`.
-- **RT-safe by design** — only the *offline* render path is Perfetto-traced. The
-  live `process()` callback is never instrumented (a `TRACE_EVENT` takes a lock at
-  buffer rollover and is not real-time-safe); live plugins use a separate
-  fixed-slot telemetry path instead.
+Tracing has two halves, and Pulp handles the plumbing for both:
 
----
-
-## Install
-
-Tracing is a **dev-only, opt-in** build option (never linked into a shipping
-plugin). Build the tracing examples:
+**1. Query / open a trace — zero-install, Pulp fetches the tool for you.**
+`pulp trace` downloads a pinned, SHA-256-verified `trace_processor` (Perfetto
+v57.2) on first use — no `brew`, no `apt`, nothing to install by hand:
 
 ```bash
-git clone https://github.com/danielraffel/pulp && cd pulp
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPULP_TRACING=ON
-cmake --build build --target pulp-trace-plugin-chain -j"$(getconf _NPROCESSORS_ONLN)"
+pulp trace fetch                       # optional: pre-fetch the pinned query tool
+pulp trace query "<sql>" --trace run.pftrace
+pulp trace open run.pftrace            # hand off to ui.perfetto.dev
+pulp trace explain "why is my plugin slow?"
 ```
 
-The `pulp trace` CLI ships with the SDK. On first `query` it fetches the pinned
-`trace_processor` automatically (or run `pulp trace fetch` up front).
+**2. Capture a trace — a dev-only build option.**
+Because tracing instruments *your* DSP, capture is a build flag, never linked into
+a shipping plugin. Turn it on for a dev build and annotate the stages you care
+about:
+
+```cpp
+pulp::runtime::Tracing::start({"dsp", "dsp.node"}, "run.pftrace");
+{
+    PULP_TRACE_SCOPE_NAMED("dsp.node", "my_stage");   // no-op when PULP_TRACING=OFF
+    // ... your DSP ...
+}
+pulp::runtime::Tracing::stop();
+```
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPULP_TRACING=ON
+```
+
+Only the **offline** render path is traced. The live `process()` callback is never
+instrumented (a `TRACE_EVENT` takes a lock at buffer rollover and is not
+real-time-safe); live plugins use a separate fixed-slot telemetry path instead.
+
+Full guide: [`docs/guides/tracing.md`](https://github.com/danielraffel/pulp/blob/main/docs/guides/tracing.md).
 
 ---
 
@@ -51,7 +60,6 @@ one deliberately expensive 8×-oversampled lead. The average load looks calm, bu
 the per-block flamegraph shows one node eating every block.
 
 ```bash
-./build/examples/trace-demo/pulp-trace-demo 0.06 /tmp/demo.pftrace
 pulp trace query \
   "select name, count(*) blocks, sum(dur)/1000.0 total_us, round(avg(dur)/1000.0,2) us_per_block \
    from slice where name in ('voice_oscillators','lead_oversampler','mix_bus') \
@@ -87,17 +95,34 @@ actually recurs — the whole reason to reach for a trace over an average.
 
 ---
 
-## How it works, briefly
+## Running these examples from source
 
-- Wrap an offline render in a session: `pulp::runtime::Tracing::start({"dsp","dsp.node"}, path)`
-  … render … `Tracing::stop()`.
-- Annotate DSP stages with `PULP_TRACE_SCOPE_NAMED("dsp.node", "my_stage")` — a
-  no-op when `PULP_TRACING=OFF`, so it costs nothing in shipping builds.
-- Open the `.pftrace` in [ui.perfetto.dev](https://ui.perfetto.dev), or query it
-  from the CLI, or ask `pulp trace explain "why is my plugin slow?"` for a
-  plain-English answer.
+The two examples above ship in the Pulp repo and build under the dev-only tracing
+option:
 
-Full guide: [`docs/guides/tracing.md`](https://github.com/danielraffel/pulp/blob/main/docs/guides/tracing.md).
+```bash
+git clone https://github.com/danielraffel/pulp && cd pulp
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPULP_TRACING=ON
+cmake --build build --target pulp-trace-demo pulp-trace-plugin-chain \
+  -j"$(getconf _NPROCESSORS_ONLN)"
+./build/examples/trace-plugin-chain/pulp-trace-plugin-chain 0.06 /tmp/chain.pftrace
+```
+
+---
+
+## Credits & licensing
+
+Tracing is a **dev-only, opt-in** subsystem — never linked into a shipping plugin,
+never exported by `cmake --install`. Built on:
+
+- [Perfetto](https://github.com/google/perfetto) (Apache-2.0) — the tracing SDK
+  (amalgamated `perfetto.cc`/`perfetto.h`) and the `trace_processor` query tool.
+- [melatonin_perfetto](https://github.com/sudara/melatonin_perfetto) (MIT) — Pulp
+  adapts only its compile-time `PRETTY_FUNCTION` trimmer.
+
+See Pulp's [licensing page](https://www.generouscorp.com/pulp/licensing.html#developer-only-tooling-not-shipped)
+and [`NOTICE.md`](https://github.com/danielraffel/pulp/blob/main/NOTICE.md) for full
+attribution.
 
 ---
 
