@@ -4,30 +4,51 @@ Perfetto-based DSP tracing for [Pulp](https://github.com/danielraffel/pulp) audi
 plugins — see, per audio block, exactly which DSP node ate the time. A scalar CPU
 meter tells you *that* you're at 40%; the trace tells you *why*.
 
-This repo is a **showcase**, not a package you install. The tracing itself lives
-in the Pulp SDK — everything below is real output from real traces (no mockups).
+## Install
 
-> **You need [Pulp](https://github.com/danielraffel/pulp) first.** Tracing is a
-> feature of the Pulp SDK, driven by the `pulp trace` CLI.
+Tracing ships **inside the Pulp SDK**, so installing it is just installing Pulp.
+Two steps, no build required:
+
+**1. Install Pulp** — this gives you the `pulp` CLI:
+
+```bash
+# macOS / Linux
+curl -fsSL https://www.generouscorp.com/pulp/install.sh | sh
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://www.generouscorp.com/pulp/install.ps1 | iex
+```
+
+**2. That's it — `pulp trace` is ready.** The query engine (Perfetto's
+`trace_processor`) downloads itself on first use, pinned and SHA-256-verified — no
+`brew`, no `apt`, nothing to build. To pre-fetch it (e.g. before going offline):
+
+```bash
+pulp tool install trace-processor      # or the alias: pulp trace fetch
+```
+
+Verify with `pulp trace --help`. (Full Pulp install options — checksum
+verification, build-from-source — are in the [Pulp README](https://github.com/danielraffel/pulp#install).)
+
+> **This repo is a showcase**, not something you clone. The code lives in the Pulp
+> SDK; everything below is real output from real traces (no mockups).
 
 ---
 
-## Use it (the Pulp-native way)
+## Use it
 
-Tracing has two halves, and Pulp handles the plumbing for both:
-
-**1. Query / open a trace — zero-install, Pulp fetches the tool for you.**
-`pulp trace` downloads a pinned, SHA-256-verified `trace_processor` (Perfetto
-v57.2) on first use — no `brew`, no `apt`, nothing to install by hand:
+**Query / open a trace.** Once Pulp is installed, point `pulp trace` at any
+`.pftrace`:
 
 ```bash
-pulp trace fetch                       # optional: pre-fetch the pinned query tool
 pulp trace query "<sql>" --trace run.pftrace
 pulp trace open run.pftrace            # hand off to ui.perfetto.dev
 pulp trace explain "why is my plugin slow?"
 ```
 
-**2. Capture a trace — a dev-only build option.**
+**Capture a trace — a dev-only build option.**
 Because tracing instruments *your* DSP, capture is a build flag, never linked into
 a shipping plugin. Turn it on for a dev build and annotate the stages you care
 about:
