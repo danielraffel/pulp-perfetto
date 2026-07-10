@@ -101,6 +101,57 @@ Full guide: [`docs/guides/tracing.md`](https://github.com/danielraffel/pulp/blob
 
 ---
 
+## Turn it on, off, and all the way out
+
+Most people leave tracing **off** and only flip it on for a profiling session — so
+the important thing is that a traced build can never be mistaken for a normal one,
+and that turning it back off (or removing the tool entirely) is a single step.
+
+**A traced build announces itself — you can't miss it.** When a binary is built
+with `-DPULP_TRACING=ON`, the plugin UI paints a small **`◉ TRACING`** pill in the
+top-right corner of the window on every frame — a bright-amber glyph on a dark
+translucent background — so you always know, just by looking, that this is a
+dev/trace build and not something to ship. The same state also shows in
+`pulp status`, and the app logs a one-line reminder at startup:
+
+```text
+Perfetto tracing compiled in (dev build) — not for release. Reconfigure with -DPULP_TRACING=OFF to disable.
+```
+
+The badge and the log line both disappear the moment tracing is off (below) —
+there is no runtime toggle that leaves a traced binary looking untraced. (A
+golden-screenshot harness can suppress the badge for reference captures via
+`pulp::view::set_tracing_badge_visible(false)`; nothing else does.)
+
+**Disable it (turn a trace build back into a normal one).** Tracing is off by
+default. Reconfigure without the flag — or with `=OFF` — and rebuild:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPULP_TRACING=OFF
+```
+
+With tracing off, every `PULP_TRACE_SCOPE*` macro compiles to nothing — no badge,
+no Perfetto symbols, no per-frame cost. That means you can **leave your
+instrumentation in place**: the `PULP_TRACE_SCOPE_NAMED(...)` lines you added cost
+nothing in a normal build, so removing "the integration" from a project is just
+flipping the flag, not deleting code. (A default build is even guarded in CI to
+contain zero Perfetto symbols.)
+
+**Remove the tool.** The `trace_processor` query engine is separate from the build
+flag — it's the thing `pulp tool install` fetched into `~/.pulp`. To remove it:
+
+```bash
+pulp tool uninstall trace-processor   # or: pulp tool uninstall perfetto
+```
+
+Pulp only ever deletes its own managed copy under `~/.pulp` — run
+`pulp tool path trace-processor` to see exactly where it lives, and
+`pulp tool list` to see what's installed. An uninstall validates the tool id and
+refuses anything that would resolve outside that directory, so it can't touch
+anything but the copy Pulp put there.
+
+---
+
 ## Use case 1 — "The load meter said 40%. The trace said *why*."
 
 `examples/trace-demo` renders an offline poly-synth: three cheap sine voices plus
