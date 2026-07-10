@@ -165,8 +165,10 @@ never exported by `cmake --install`. Built on:
 
 - [Perfetto](https://github.com/google/perfetto) (Apache-2.0) — the tracing SDK
   (amalgamated `perfetto.cc`/`perfetto.h`) and the `trace_processor` query tool.
-- [melatonin_perfetto](https://github.com/sudara/melatonin_perfetto) (MIT) — Pulp
-  adapts only its compile-time `PRETTY_FUNCTION` trimmer.
+- [melatonin_perfetto](https://github.com/sudara/melatonin_perfetto) (MIT —
+  declared as `license: MIT` in the module header's JUCE module block, since the
+  repo ships no separate `LICENSE` file) — Pulp adapts only its compile-time
+  `PRETTY_FUNCTION` trimmer.
 
 See Pulp's [licensing page](https://www.generouscorp.com/pulp/licensing.html#developer-only-tooling-not-shipped)
 and [`NOTICE.md`](https://github.com/danielraffel/pulp/blob/main/NOTICE.md) for full
