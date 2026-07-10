@@ -4,6 +4,14 @@ Perfetto-based DSP tracing for [Pulp](https://github.com/danielraffel/pulp) audi
 plugins — see, per audio block, exactly which DSP node ate the time. A scalar CPU
 meter tells you *that* you're at 40%; the trace tells you *why*.
 
+**Easy to set up, easy to use.** One command adds the tool
+(`pulp tool install trace-processor`) — and you don't need to learn SQL to read a
+trace. Just ask in plain English: with the
+[Pulp Claude Code plugin](https://github.com/danielraffel/pulp/blob/main/docs/guides/claude-code-plugin.md),
+say `/trace "why is my plugin slow to open?"` and the agent captures the trace,
+reads it, and answers with a root cause and a fix. (No plugin? The CLI does the
+same: `pulp trace explain "..."`.)
+
 ## Install
 
 **1. Install [Pulp](https://github.com/danielraffel/pulp)** — most people reading
@@ -49,6 +57,9 @@ pulp trace open run.pftrace            # hand off to ui.perfetto.dev
 pulp trace explain "why is my plugin slow?"
 ```
 
+`pulp trace explain` (and `/trace` in Claude Code) is the plain-English path — no
+SQL; it returns a root cause and a fix. Use `query` when you want the raw numbers.
+
 **Capture a trace — a dev-only build option.**
 Because tracing instruments *your* DSP, capture is a build flag, never linked into
 a shipping plugin. Turn it on for a dev build and annotate the stages you care
@@ -66,6 +77,21 @@ pulp::runtime::Tracing::stop();
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPULP_TRACING=ON
 ```
+
+**Static vs dynamic span names.** By default a span's name is **static** —
+`PULP_TRACE_SCOPE(category)` uses the enclosing function name and
+`PULP_TRACE_SCOPE_NAMED(category, "literal")` a fixed label — which keeps
+`GROUP BY name` queries cheap. To make the name carry a **runtime** value (a
+parameter name, a graph-node id, a file basename), opt in per call site:
+
+```cpp
+PULP_TRACE_SCOPE_DYNAMIC("dsp.node", node.display_name());   // runtime string
+```
+
+That's the switch: reach for `_DYNAMIC` only when the runtime value is the thing
+you want to query on — it copies the string on every event and raises name
+cardinality, so stay static otherwise. All three macros compile to nothing when
+`PULP_TRACING` is off, so nothing you add here ships.
 
 Only the **offline** render path is traced. The live `process()` callback is never
 instrumented (a `TRACE_EVENT` takes a lock at buffer rollover and is not
