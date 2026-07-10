@@ -22,9 +22,6 @@ curl -fsSL https://www.generouscorp.com/pulp/install.sh | sh
 irm https://www.generouscorp.com/pulp/install.ps1 | iex
 ```
 
-Checksum verification and build-from-source options are in the
-[Pulp README](https://github.com/danielraffel/pulp#install).
-
 </details>
 
 **2. Install the trace tool:**
