@@ -6,10 +6,11 @@ meter tells you *that* you're at 40%; the trace tells you *why*.
 
 ## Install
 
-Tracing ships **inside the Pulp SDK**, so installing it is just installing Pulp.
-Two steps, no build required:
+**1. Install [Pulp](https://github.com/danielraffel/pulp)** — most people reading
+this already have it.
 
-**1. Install Pulp** — this gives you the `pulp` CLI:
+<details>
+<summary>Don't have Pulp yet? Install it (click to expand)</summary>
 
 ```bash
 # macOS / Linux
@@ -21,19 +22,22 @@ curl -fsSL https://www.generouscorp.com/pulp/install.sh | sh
 irm https://www.generouscorp.com/pulp/install.ps1 | iex
 ```
 
-**2. That's it — `pulp trace` is ready.** The query engine (Perfetto's
-`trace_processor`) downloads itself on first use, pinned and SHA-256-verified — no
-`brew`, no `apt`, nothing to build. To pre-fetch it (e.g. before going offline):
+Checksum verification and build-from-source options are in the
+[Pulp README](https://github.com/danielraffel/pulp#install).
+
+</details>
+
+**2. Install the trace tool:**
 
 ```bash
-pulp tool install trace-processor      # or the alias: pulp trace fetch
+pulp tool install trace-processor
 ```
 
-Verify with `pulp trace --help`. (Full Pulp install options — checksum
-verification, build-from-source — are in the [Pulp README](https://github.com/danielraffel/pulp#install).)
+That's the whole setup. This adds Perfetto's `trace_processor` (the query engine),
+pinned and verified — nothing to build. You're ready to [use it](#use-it).
 
 > **This repo is a showcase**, not something you clone. The code lives in the Pulp
-> SDK; everything below is real output from real traces (no mockups).
+> SDK; the images below are real trace output.
 
 ---
 
