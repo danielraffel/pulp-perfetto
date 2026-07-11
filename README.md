@@ -41,8 +41,30 @@ pulp tool install trace-processor
 That's the whole setup. This adds Perfetto's `trace_processor` (the query engine),
 pinned and verified — nothing to build. You're ready to [use it](#use-it).
 
-> **This repo is a showcase**, not something you clone. The code lives in the Pulp
-> SDK; the images below are real trace output.
+**How Pulp installs it.** `trace-processor` is an entry in Pulp's cargo-like tool
+registry, so `pulp tool install` never shells out to `brew`/`apt` or compiles
+anything. It downloads the prebuilt Perfetto `trace_processor_shell` for your
+platform from an immutable, versioned URL, checks it against a pinned SHA-256, and
+drops it in `~/.pulp/tools/trace-processor/` — same bytes every time, offline-safe,
+nothing global touched. `pulp tool info trace-processor` shows the resolved version
+and path; `pulp tool uninstall trace-processor` removes it.
+
+> **This repo is a showcase**, not something you clone — it's docs plus real trace
+> images. **The actual code lives in the [Pulp SDK](https://github.com/danielraffel/pulp):**
+>
+> - **Tracing runtime** — the `PULP_TRACE_SCOPE_NAMED` macros and session start/stop:
+>   [`core/runtime/include/pulp/runtime/trace.hpp`](https://github.com/danielraffel/pulp/blob/main/core/runtime/include/pulp/runtime/trace.hpp)
+>   · [`src/trace.cpp`](https://github.com/danielraffel/pulp/blob/main/core/runtime/src/trace.cpp)
+> - **Tool installer** — how `pulp tool install` fetches + verifies:
+>   [`tools/cli/tool_registry.cpp`](https://github.com/danielraffel/pulp/blob/main/tools/cli/tool_registry.cpp),
+>   with the pinned URLs + per-platform hashes in
+>   [`tools/packages/tool-registry.json`](https://github.com/danielraffel/pulp/blob/main/tools/packages/tool-registry.json)
+> - **Full guide** — [`docs/guides/tracing.md`](https://github.com/danielraffel/pulp/blob/main/docs/guides/tracing.md),
+>   including [how the Perfetto pin is kept current](https://github.com/danielraffel/pulp/blob/main/docs/guides/tracing.md#keeping-perfetto-current)
+> - **Agent skills** — [`trace-analysis`](https://github.com/danielraffel/pulp/blob/main/.agents/skills/trace-analysis/SKILL.md)
+>   (the "why is it slow?" harness) and
+>   [`installable-tools`](https://github.com/danielraffel/pulp/blob/main/.agents/skills/installable-tools/SKILL.md)
+>   (the tool-install contract)
 
 ---
 
