@@ -111,7 +111,11 @@ and that turning it back off (or removing the tool entirely) is a single step.
 with `-DPULP_TRACING=ON`, the plugin UI paints a small **`◉ TRACING`** pill in the
 top-right corner of the window on every frame — a bright-amber glyph on a dark
 translucent background — so you always know, just by looking, that this is a
-dev/trace build and not something to ship. The same state also shows in
+dev/trace build and not something to ship.
+
+![The bright-amber ◉ TRACING pill in the top-right corner of a Pulp UI (the ui-preview example), painted every frame by a PULP_TRACING=ON build](assets/perfetto-tracing-badge.png)
+
+The same state also shows in
 `pulp status`, and the app logs a one-line reminder at startup:
 
 ```text
