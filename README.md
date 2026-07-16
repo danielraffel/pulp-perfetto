@@ -250,7 +250,7 @@ never exported by `cmake --install`. Built on:
   shaped Pulp's whole tracing approach: the opt-in, off-by-default posture, the
   "did I leave it on?" guardrails, and the trace-macro workflow all follow his
   lead. The code Pulp adapts directly is his elegant compile-time
-  `PRETTY_FUNCTION` trimmer; the rest we gratefully learned from. Thank you, Sudara.
+  `PRETTY_FUNCTION` trimmer.
 
 See Pulp's [licensing page](https://www.generouscorp.com/pulp/licensing.html#developer-only-tooling-not-shipped)
 and [`NOTICE.md`](https://github.com/danielraffel/pulp/blob/main/NOTICE.md) for full
