@@ -243,8 +243,14 @@ never exported by `cmake --install`. Built on:
 - [Perfetto](https://github.com/google/perfetto) (Apache-2.0) — the tracing SDK
   (amalgamated `perfetto.cc`/`perfetto.h`) and the `trace_processor` query tool.
 - [melatonin_perfetto](https://github.com/sudara/melatonin_perfetto)
-  ([MIT](https://github.com/sudara/melatonin_perfetto/blob/main/melatonin_perfetto/melatonin_perfetto.h)) —
-  Pulp adapts only its compile-time `PRETTY_FUNCTION` trimmer.
+  ([MIT](https://github.com/sudara/melatonin_perfetto/blob/main/melatonin_perfetto/melatonin_perfetto.h))
+  by [Sudara](https://github.com/sudara) — the project that showed us how to bring
+  Perfetto to an audio framework. His module and its wonderful
+  [blog post](https://melatonin.dev/blog/using-perfetto-with-juce-for-dsp-and-ui-performance-tuning)
+  shaped Pulp's whole tracing approach: the opt-in, off-by-default posture, the
+  "did I leave it on?" guardrails, and the trace-macro workflow all follow his
+  lead. The code Pulp adapts directly is his elegant compile-time
+  `PRETTY_FUNCTION` trimmer; the rest we gratefully learned from. Thank you, Sudara.
 
 See Pulp's [licensing page](https://www.generouscorp.com/pulp/licensing.html#developer-only-tooling-not-shipped)
 and [`NOTICE.md`](https://github.com/danielraffel/pulp/blob/main/NOTICE.md) for full
